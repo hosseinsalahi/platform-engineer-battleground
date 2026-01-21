@@ -1,0 +1,13 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-app
+  namespace: cnpe-packaging
+spec:
+  replicas: 2
+  template:
+    spec:
+      containers:
+        - name: web-app
+          image: "nginx:1.19"
+          imagePullPolicy: IfNotPresent

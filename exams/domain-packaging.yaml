@@ -1,0 +1,16 @@
+name: "Packaging Domain Exam"
+totalMinutes: 30
+instructions:
+  - "Provision the lab first (recommended): `just provision-exam domain-packaging`."
+  - "Use `just domain-packaging` to run."
+sections:
+  - id: "pkg-helm"
+    domain: "Packaging"
+    minutes: 15
+    challenge: "7-packaging/helm-templating"
+    objective: "Fix Broken Helm Chart."
+  - id: "pkg-kustomize"
+    domain: "Packaging"
+    minutes: 15
+    challenge: "7-packaging/kustomize-overlays"
+    objective: "Create Production Kustomize Overlay."

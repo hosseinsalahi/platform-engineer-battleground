@@ -1,0 +1,23 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: backup-operator-role
+  namespace: cnpe-operator-test
+rules:
+- apiGroups: [platform.cnpe.io]
+  resources: [databasebackups]
+  verbs: [get, list, watch, create, update, delete]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: backup-operator-binding
+  namespace: cnpe-operator-test
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: backup-operator-role
+subjects:
+- kind: ServiceAccount
+  name: backup-operator
+  namespace: cnpe-operator-test

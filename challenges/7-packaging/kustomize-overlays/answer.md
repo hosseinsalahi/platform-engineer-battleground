@@ -1,0 +1,28 @@
+# Solution: Kustomize Overlay
+
+## `overlays/prod/kustomization.yaml`
+
+```yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: cnpe-packaging
+
+resources:
+- ../../base
+
+nameSuffix: -prod
+
+replicas:
+- name: my-app
+  count: 3
+
+patches:
+- target:
+    kind: Deployment
+    name: my-app
+  patch: |-
+    - op: add
+      path: /spec/template/spec/containers/0/resources/limits
+      value:
+        memory: "512Mi"
+```

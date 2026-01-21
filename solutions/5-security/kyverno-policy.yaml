@@ -1,0 +1,37 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-memory-limits
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+  - name: require-memory-limits
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+          namespaces:
+          - cnpe-security-test
+    validate:
+      message: "Memory limits are required for all containers."
+      pattern:
+        spec:
+          containers:
+          - resources:
+              limits:
+                memory: "?*"
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: compliant-pod
+  namespace: cnpe-security-test
+spec:
+  containers:
+  - name: nginx
+    image: nginx:1.25
+    resources:
+      limits:
+        memory: "128Mi"

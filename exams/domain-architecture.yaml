@@ -1,0 +1,36 @@
+name: "Architecture Domain Exam"
+totalMinutes: 90
+instructions:
+  - "Provision the lab first (recommended): `just provision-exam domain-architecture`."
+  - "Use `just domain-architecture` to run."
+sections:
+  - id: "arch-networkpolicy"
+    domain: "Architecture (15%)"
+    minutes: 15
+    challenge: "4-architecture/network-policy"
+    objective: "Configure NetworkPolicy for multi-tenancy."
+  - id: "arch-quota"
+    domain: "Architecture (15%)"
+    minutes: 15
+    challenge: "4-architecture/resource-quota"
+    objective: "Configure ResourceQuota and LimitRange."
+  - id: "arch-pdb"
+    domain: "Architecture (15%)"
+    minutes: 15
+    challenge: "4-architecture/pod-disruption-budget"
+    objective: "Configure a PodDisruptionBudget for availability."
+  - id: "arch-storage"
+    domain: "Architecture (15%)"
+    minutes: 15
+    challenge: "4-architecture/storage-class"
+    objective: "Configure StorageClass for persistent storage."
+  - id: "arch-mesh"
+    domain: "Architecture (15%)"
+    minutes: 15
+    challenge: "4-architecture/service-mesh"
+    objective: "Configure Istio VirtualService traffic splitting."
+  - id: "arch-fault"
+    domain: "Architecture (15%)"
+    minutes: 15
+    challenge: "4-architecture/istio-fault-injection"
+    objective: "Inject fault using Istio VirtualService."

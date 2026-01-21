@@ -1,0 +1,42 @@
+name: "Security Domain Exam"
+totalMinutes: 90
+instructions:
+  - "Provision the lab first (recommended): `just provision-exam domain-security`."
+  - "Treat this like an exam: no peeking at `answer.md`."
+  - "Use `just domain-security` to run."
+sections:
+  - id: "sec-policy"
+    domain: "Security (15%)"
+    minutes: 15
+    challenge: "5-security/kyverno-policy"
+    objective: "Troubleshoot a broken Kyverno policy."
+  - id: "sec-rbac-fix"
+    domain: "Security (15%)"
+    minutes: 15
+    challenge: "5-security/rbac-fix"
+    objective: "Troubleshoot an RBAC issue."
+  - id: "sec-rbac-min"
+    domain: "Security (15%)"
+    minutes: 15
+    challenge: "5-security/rbac-minimal"
+    objective: "Grant least-privilege RBAC (ConfigMaps allowed, Secrets denied)."
+  - id: "sec-pss"
+    domain: "Security (15%)"
+    minutes: 15
+    challenge: "5-security/pod-security"
+    objective: "Enforce Pod Security Standards."
+  - id: "sec-mtls"
+    domain: "Security (15%)"
+    minutes: 15
+    challenge: "5-security/istio-mtls"
+    objective: "Configure strict mTLS with Istio."
+  - id: "sec-gatekeeper"
+    domain: "Security (15%)"
+    minutes: 15
+    challenge: "5-security/gatekeeper-constraint"
+    objective: "Create a Gatekeeper Constraint to enforce a policy."
+  - id: "sec-eso"
+    domain: "Security (15%)"
+    minutes: 15
+    challenge: "5-security/external-secrets"
+    objective: "Troubleshoot External Secrets synchronization."

@@ -1,0 +1,21 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.13.7/.schema/devbox.schema.json",
+  "packages": [
+    "argocd@3.1.8",
+    "istioctl@1.28.0",
+    "kind@0.20.0",
+    "kubectl@1.31.0",
+    "kubernetes-helm@3.13.0",
+    "kuttl@0.15.0",
+    "kyverno@1.15.2",
+    "shellcheck@0.10.0",
+    "tektoncd-cli@0.43.0",
+    "yq-go@4.44.3"
+  ],
+  "shell": {
+    "init_hook": [
+      "echo 'CNPE Lab environment ready' > /dev/null"
+    ],
+    "scripts": {}
+  }
+}

@@ -1,0 +1,60 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cnpe-observability
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-service
+  namespace: cnpe-observability
+  labels:
+    app: payment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: payment
+  template:
+    metadata:
+      labels:
+        app: payment
+    spec:
+      containers:
+      - name: nginx
+        image: nginx
+        ports:
+        - containerPort: 80
+          name: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment-service
+  namespace: cnpe-observability
+  labels:
+    app: payment
+spec:
+  ports:
+  - port: 80
+    targetPort: 80
+    name: http
+  selector:
+    app: payment
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: payment-monitor
+  namespace: cnpe-observability
+  labels:
+    release: prometheus-stack # Common label for discovery
+spec:
+  selector:
+    matchLabels:
+      app: payment-wrong # <--- BROKEN
+  endpoints:
+  - port: http
+  namespaceSelector:
+    matchNames:
+    - cnpe-observability

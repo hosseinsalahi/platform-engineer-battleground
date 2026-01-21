@@ -1,0 +1,32 @@
+# Fixed TriggerTemplate - pipelineRef corrected
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerTemplate
+metadata:
+  name: build-trigger-template
+  namespace: cnpe-tekton-test
+spec:
+  params:
+  - name: repo-url
+    description: The git repository url
+  resourcetemplates:
+  - apiVersion: tekton.dev/v1
+    kind: PipelineRun
+    metadata:
+      generateName: build-app-run-
+    spec:
+      pipelineRef:
+        name: build-app
+      params:
+      - name: repo-url
+        value: $(tt.params.repo-url)
+---
+# Fixed TriggerBinding - param name and path corrected
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerBinding
+metadata:
+  name: build-trigger-binding
+  namespace: cnpe-tekton-test
+spec:
+  params:
+  - name: repo-url
+    value: $(body.repository.clone_url)

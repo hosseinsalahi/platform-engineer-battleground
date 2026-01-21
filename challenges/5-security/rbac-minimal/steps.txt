@@ -1,0 +1,2 @@
+0:Create a Role and RoleBinding that allows reading ConfigMaps only
+

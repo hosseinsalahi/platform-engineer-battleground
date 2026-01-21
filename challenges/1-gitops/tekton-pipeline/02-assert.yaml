@@ -1,0 +1,14 @@
+# Phase 3: Verify TriggerTemplate and TriggerBinding work together
+apiVersion: kuttl.dev/v1beta1
+kind: TestAssert
+commands:
+  - script: |
+      # Verify TriggerTemplate would create correct PipelineRun
+      kubectl get triggertemplate build-trigger-template -n cnpe-tekton-test -o yaml | \
+        grep -q 'name: build-app'
+
+      # Verify TriggerBinding extracts correct parameter
+      kubectl get triggerbinding build-trigger-binding -n cnpe-tekton-test -o yaml | \
+        grep -q 'name: repo-url' && \
+      kubectl get triggerbinding build-trigger-binding -n cnpe-tekton-test -o yaml | \
+        grep -q 'repository.clone_url'

@@ -1,0 +1,41 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: environments.platform.cnpe.io
+spec:
+  group: platform.cnpe.io
+  names:
+    kind: Environment
+    listKind: EnvironmentList
+    plural: environments
+    singular: environment
+    shortNames:
+    - env
+  scope: Namespaced
+  versions:
+  - name: v1
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            required:
+            - team
+            properties:
+              team:
+                type: string
+              size:
+                type: string
+                enum: [small, medium, large]
+---
+apiVersion: platform.cnpe.io/v1
+kind: Environment
+metadata:
+  name: dev-alpha
+  namespace: cnpe-platform
+spec:
+  team: alpha
+  size: medium

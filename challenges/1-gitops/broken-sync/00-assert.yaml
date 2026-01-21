@@ -1,0 +1,11 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cnpe-broken-app
+  namespace: argocd
+status:
+  # Application should eventually become Synced and Healthy once user fixes source path
+  sync:
+    status: Synced
+  health:
+    status: Healthy

@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-service
+  namespace: cnpe-tracing-test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: order-service
+  template:
+    metadata:
+      labels:
+        app: order-service
+    spec:
+      containers:
+      - name: order-service
+        image: nginx:1.25
+        ports:
+        - containerPort: 80
+        env:
+        - name: OTEL_SERVICE_NAME
+          value: order-service
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: http://jaeger-collector:4317
+        - name: OTEL_PROPAGATORS
+          value: tracecontext,baggage
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-service
+  namespace: cnpe-tracing-test
+spec:
+  selector:
+    app: order-service
+  ports:
+  - port: 80
+    targetPort: 80

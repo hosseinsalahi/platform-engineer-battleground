@@ -1,0 +1,36 @@
+name: "GitOps Domain Exam"
+totalMinutes: 90
+instructions:
+  - "Provision the lab first (recommended): `just provision-exam domain-gitops`."
+  - "Use `just domain-gitops` to run."
+sections:
+  - id: "gitops-fix"
+    domain: "GitOps (25%)"
+    minutes: 15
+    challenge: "1-gitops/broken-sync"
+    objective: "Fix broken ArgoCD sync."
+  - id: "gitops-canary"
+    domain: "GitOps (25%)"
+    minutes: 15
+    challenge: "1-gitops/canary-rollout"
+    objective: "Configure Argo Rollouts canary deployment."
+  - id: "gitops-tekton"
+    domain: "GitOps (25%)"
+    minutes: 15
+    challenge: "1-gitops/tekton-pipeline"
+    objective: "Setup Tekton trigger pipeline."
+  - id: "gitops-appset"
+    domain: "GitOps (25%)"
+    minutes: 15
+    challenge: "1-gitops/env-promotion"
+    objective: "ArgoCD ApplicationSet environment promotion."
+  - id: "gitops-bluegreen"
+    domain: "GitOps (25%)"
+    minutes: 15
+    challenge: "1-gitops/bluegreen"
+    objective: "Blue/Green deployment with Argo Rollouts."
+  - id: "gitops-istio"
+    domain: "GitOps (25%)"
+    minutes: 15
+    challenge: "1-gitops/istio-canary"
+    objective: "Istio canary release troubleshooting."

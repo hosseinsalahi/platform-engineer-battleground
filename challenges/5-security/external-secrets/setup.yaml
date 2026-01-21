@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cnpe-eso-test
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ClusterSecretStore
+metadata:
+  name: global-fake-store
+spec:
+  provider:
+    fake:
+      data:
+      - key: "/prod/payment-service/db"
+        version: "v1"
+        valueMap:
+          username: "admin"
+          password: "super-secure-password-123"
+          host: "db.production.svc"
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: payment-db-secret
+  namespace: cnpe-eso-test
+spec:
+  refreshInterval: 1m
+  secretStoreRef:
+    name: global-fake-store
+    kind: ClusterSecretStore
+  target:
+    name: payment-db-connection
+    creationPolicy: Owner
+  data:
+  - secretKey: DB_HOST
+    remoteRef:
+      key: "/prod/payment-service/db"
+      property: "host"
+  - secretKey: DB_PASSWORD
+    remoteRef:
+      key: "/prod/payment-service/db"
+      property: "pass_word" # BUG: Incorrect property name (should be 'password')

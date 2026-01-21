@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cnpe-rbac-min
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: app-reader
+  namespace: cnpe-rbac-min
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: cnpe-rbac-min
+data:
+  mode: "demo"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: top-secret
+  namespace: cnpe-rbac-min
+type: Opaque
+stringData:
+  password: "do-not-read"
+

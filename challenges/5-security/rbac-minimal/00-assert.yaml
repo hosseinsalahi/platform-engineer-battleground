@@ -1,0 +1,18 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestAssert
+commands:
+  - script: |
+      if [ "$(kubectl auth can-i get configmaps -n cnpe-rbac-min --as=system:serviceaccount:cnpe-rbac-min:app-reader)" = "yes" ]; then
+        echo "OK: app-reader can get configmaps"
+      else
+        echo "FAIL: app-reader cannot get configmaps"
+        exit 1
+      fi
+  - script: |
+      if [ "$(kubectl auth can-i list secrets -n cnpe-rbac-min --as=system:serviceaccount:cnpe-rbac-min:app-reader)" = "no" ]; then
+        echo "OK: app-reader cannot list secrets"
+      else
+        echo "FAIL: app-reader can list secrets"
+        exit 1
+      fi
+

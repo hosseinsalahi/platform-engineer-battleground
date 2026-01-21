@@ -1,0 +1,64 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xdatabaserequests.platform.cnpe.io
+spec:
+  group: platform.cnpe.io
+  names:
+    kind: XDatabaseRequest
+    plural: xdatabaserequests
+  claimNames:
+    kind: DatabaseRequest
+    plural: databaserequests
+  connectionSecretKeys:
+  - username
+  - password
+  - endpoint
+  versions:
+  - name: v1
+    served: true
+    referenceable: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            required:
+            - size
+            - engine
+            properties:
+              size:
+                type: string
+                enum: [small, medium, large]
+              engine:
+                type: string
+                enum: [postgres, mysql]
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: database-composition
+spec:
+  compositeTypeRef:
+    apiVersion: platform.cnpe.io/v1
+    kind: XDatabaseRequest
+  resources:
+  - name: database-config
+    base:
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        namespace: cnpe-selfservice-test
+      data:
+        endpoint: "database.example.com"
+        username: "admin"
+---
+apiVersion: platform.cnpe.io/v1
+kind: DatabaseRequest
+metadata:
+  name: test-db
+  namespace: cnpe-selfservice-test
+spec:
+  size: medium
+  engine: postgres

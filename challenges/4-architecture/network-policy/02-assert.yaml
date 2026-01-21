@@ -1,0 +1,6 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestAssert
+timeout: 60
+commands:
+  - script: |
+      kubectl get networkpolicy -n tenant-alpha -o yaml | grep -q 'purpose: monitoring'

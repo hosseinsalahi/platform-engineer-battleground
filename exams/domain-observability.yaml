@@ -1,0 +1,36 @@
+name: "Observability Domain Exam"
+totalMinutes: 90
+instructions:
+  - "Provision the lab first (recommended): `just provision-exam domain-observability`."
+  - "Use `just domain-observability` to run."
+sections:
+  - id: "obs-monitor"
+    domain: "Observability (20%)"
+    minutes: 15
+    challenge: "3-observability/broken-servicemonitor"
+    objective: "Fix broken ServiceMonitor selector."
+  - id: "obs-cost"
+    domain: "Observability (20%)"
+    minutes: 15
+    challenge: "3-observability/cost-allocation"
+    objective: "Fix OpenCost cost allocation labels."
+  - id: "obs-grafana"
+    domain: "Observability (20%)"
+    minutes: 15
+    challenge: "3-observability/grafana-dashboard"
+    objective: "Fix broken Grafana dashboard."
+  - id: "obs-alerting"
+    domain: "Observability (20%)"
+    minutes: 15
+    challenge: "3-observability/prometheus-alert"
+    objective: "Fix Prometheus alerting rule."
+  - id: "obs-tracing"
+    domain: "Observability (20%)"
+    minutes: 15
+    challenge: "3-observability/jaeger-trace"
+    objective: "Configure Jaeger tracing for application."
+  - id: "obs-incident"
+    domain: "Observability (20%)"
+    minutes: 15
+    challenge: "3-observability/incident-fix"
+    objective: "Diagnose and fix pod failure incident."

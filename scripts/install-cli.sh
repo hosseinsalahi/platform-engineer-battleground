@@ -1,0 +1,253 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+# shellcheck disable=SC2317,SC2329
+on_error() {
+  local exit_code=$?
+  trap - ERR
+  local where=""
+  where="$(caller 0 2>/dev/null || true)"
+  echo "ERROR: ${0##*/}: ${where:-unknown}: ${BASH_COMMAND} (exit ${exit_code})" >&2
+  exit "$exit_code"
+}
+trap on_error ERR
+
+OS=$(uname -s || echo unknown)
+
+usage() {
+  cat <<'EOF'
+Usage: install-cli.sh [--apply|--print] [--force]
+
+Options:
+  --apply   On Linux, execute recommended install commands with sudo
+  --print   On Linux, print recommended install commands (default)
+  --force   Reinstall/overwrite even if tools already present (macOS brew; Linux apply mode downloads again)
+
+Notes:
+  - macOS always installs via Homebrew (requires brew)
+  - For Linux, architecture defaults to x86_64; adjust URLs for arm64
+EOF
+}
+
+MODE="print"
+FORCE=0
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --apply) MODE="apply"; shift ;;
+    --print) MODE="print"; shift ;;
+    --force) FORCE=1; shift ;;
+    -h|--help) usage; exit 0 ;;
+    *) echo "Unknown option: $1" >&2; usage; exit 1 ;;
+  esac
+done
+
+if [[ "$OS" == "Darwin" ]]; then
+  if ! command -v brew >/dev/null 2>&1; then
+    echo "Homebrew is required on macOS. Install: https://brew.sh" >&2
+    exit 1
+  fi
+  echo "Installing CLIs via Homebrew..."
+  FORMULAE=(podman kuttl kind kubernetes-cli helm istioctl tektoncd-cli argocd kyverno yq)
+  for f in "${FORMULAE[@]}"; do
+    if brew list --formula "$f" >/dev/null 2>&1; then
+      if [[ $FORCE -eq 1 ]]; then
+        echo "  ↻ Reinstalling $f"
+        brew reinstall "$f" || brew install "$f"
+      else
+        echo "  ✓ $f already installed"
+      fi
+    else
+      brew install "$f"
+    fi
+  done
+  echo ""
+  echo "Setting up Podman machine (required for macOS, especially Apple Silicon)..."
+  if ! podman machine list --format "{{.Name}}" 2>/dev/null | grep -q .; then
+    echo "  → Initializing Podman machine with recommended resources (4 CPUs, 8GB RAM, 50GB disk)..."
+    podman machine init --cpus 4 --memory 8192 --disk-size 50
+    podman machine start
+    echo "  ✓ Podman machine initialized and started"
+  else
+    if ! podman machine list --format "{{.Running}}" 2>/dev/null | grep -q "true"; then
+      echo "  → Starting Podman machine..."
+      podman machine start
+      echo "  ✓ Podman machine started"
+    else
+      echo "  ✓ Podman machine already running"
+    fi
+  fi
+  echo ""
+  echo "Configuring kind to use Podman..."
+  echo "Add to your shell profile: export KIND_EXPERIMENTAL_PROVIDER=podman"
+  echo ""
+  echo "If KUTTL isn't found as a kubectl plugin, ensure PATH is updated."
+  echo "Verify with: just check"
+elif [[ "$OS" == "Linux" ]]; then
+  # Detect distribution
+  if [[ -f /etc/os-release ]]; then
+    # shellcheck disable=SC1091
+    . /etc/os-release
+  fi
+  DISTRO=${ID_LIKE:-${ID:-unknown}}
+  if [[ "$MODE" == "print" ]]; then
+    echo "Linux detected ($DISTRO). Printing recommended install commands:"
+    echo "Note: The following commands use pinned versions and verify checksums for security."
+    echo ""
+  fi
+  
+  # Checksum verification helper script (embedded in print mode if needed, but here unused)
+  # verify_sum logic removed as it was unused.
+
+  case "$DISTRO" in
+    *debian*|*ubuntu*|*rhel*|*centos*|*fedora*)
+      # Common install logic for Linux distros
+      if [[ "$MODE" == "print" ]]; then
+        cat <<EOF
+# Dependencies
+sudo apt-get update && sudo apt-get install -y curl git python3 python3-pip podman || \
+sudo dnf install -y curl git python3 python3-pip podman
+
+# Configure kind to use podman
+export KIND_EXPERIMENTAL_PROVIDER=podman
+
+# kubectl (v1.28.2)
+curl -LO "https://dl.k8s.io/v1.28.2/bin/linux/amd64/kubectl"
+echo "c922440b043e5de1afa3c1382f8c663a25f055978cbc6e8423493ec157579ec5  kubectl" | sha256sum --check
+chmod +x kubectl && sudo mv kubectl /usr/local/bin/
+
+# kind (v0.20.0)
+curl -Lo kind https://kind.sigs.k8s.io/dl/v0.20.0/kind-linux-amd64
+echo "513a7213d6d3332dd9ef27c24dab35e5ef10a04fa27274fe1c14d8a246493ded  kind" | sha256sum --check
+chmod +x kind && sudo mv kind /usr/local/bin/
+
+# helm (v3.13.3)
+curl -LO https://get.helm.sh/helm-v3.13.3-linux-amd64.tar.gz
+echo "bbb6e7c6201458b235f335280f35493950dcd856825ddcfd1d3b40ae757d5c7d  helm-v3.13.3-linux-amd64.tar.gz" | sha256sum --check
+tar -zxvf helm-v3.13.3-linux-amd64.tar.gz
+sudo mv linux-amd64/helm /usr/local/bin/helm
+rm -rf linux-amd64 helm-v3.13.3-linux-amd64.tar.gz
+
+# kuttl (v0.24.0)
+curl -L https://github.com/kudobuilder/kuttl/releases/download/v0.24.0/kuttl_0.24.0_linux_x86_64.tar.gz -o kuttl.tar.gz
+echo "9451186fd17517a58ac5c498c1b7761fd117e91db3c7543d437554fab7452294  kuttl.tar.gz" | sha256sum --check
+tar -xzf kuttl.tar.gz kubectl-kuttl && sudo mv kubectl-kuttl /usr/local/bin/ && rm kuttl.tar.gz
+
+# istioctl (1.28.0) - Note: Using 1.28.0 as requested, though usually older. 
+# WARNING: Checksum verification skipped for istioctl installer script pattern.
+# Recommended: Download binary directly if available.
+curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.28.0 sh -
+sudo mv istio-1.28.0/bin/istioctl /usr/local/bin/
+
+# tekton CLI (v0.43.0)
+curl -LO https://github.com/tektoncd/cli/releases/download/v0.43.0/tkn_0.43.0_Linux_x86_64.tar.gz
+echo "8a5cbeed07fcfd519199c84f93d08ec2c5d3ccea987b4573b1cd3b8def19ceb5  tkn_0.43.0_Linux_x86_64.tar.gz" | sha256sum --check
+tar -xzf tkn_0.43.0_Linux_x86_64.tar.gz tkn && sudo mv tkn /usr/local/bin/ && rm tkn_0.43.0_Linux_x86_64.tar.gz
+
+# argocd (v2.12.3)
+curl -sLO https://github.com/argoproj/argo-cd/releases/download/v2.12.3/argocd-linux-amd64
+echo "28350b3d67b441a1871ea1ef957ffd0a62d4c1827c0ce261aba63809113ab783  argocd-linux-amd64" | sha256sum --check
+chmod +x argocd-linux-amd64 && sudo mv argocd-linux-amd64 /usr/local/bin/argocd
+
+# kyverno CLI (v1.16.1)
+curl -LO https://github.com/kyverno/kyverno/releases/download/v1.16.1/kyverno-cli_v1.16.1_linux_x86_64.tar.gz
+echo "0c0216e4c3bb535eaf94ea1c2e13e4d66f7be2ec6446c37aee6c3133650167e7  kyverno-cli_v1.16.1_linux_x86_64.tar.gz" | sha256sum --check
+tar -xzf kyverno-cli_v1.16.1_linux_x86_64.tar.gz kyverno && sudo mv kyverno /usr/local/bin/ && rm kyverno-cli_v1.16.1_linux_x86_64.tar.gz
+
+# yq (v4.50.1)
+curl -Lo yq https://github.com/mikefarah/yq/releases/download/v4.50.1/yq_linux_amd64
+echo "c7a1278e6bbc4924f41b56db838086c39d13ee25dcb22089e7fbf16ac901f0d4  yq" | sha256sum --check
+chmod +x yq && sudo mv yq /usr/local/bin/
+
+# Verify
+just check
+EOF
+      else
+        # APPLY MODE
+        echo "Installing tools..."
+        
+        # Package managers
+        if command -v apt-get >/dev/null; then
+          sudo apt-get update
+          sudo apt-get install -y curl git python3 python3-pip podman
+        elif command -v dnf >/dev/null; then
+           sudo dnf install -y curl git python3 python3-pip podman
+        fi
+
+        export KIND_EXPERIMENTAL_PROVIDER=podman
+        
+        # Helper to download and verify
+        install_bin() {
+          local url=$1
+          local sha=$2
+          local name=$3
+          echo "  Downloading $name..."
+          curl -fsSL "$url" -o "$name"
+          echo "$sha  $name" | sha256sum --check || exit 1
+          chmod +x "$name"
+          sudo mv "$name" /usr/local/bin/
+        }
+
+        # Kubectl
+        install_bin "https://dl.k8s.io/v1.28.2/bin/linux/amd64/kubectl" \
+                    "c922440b043e5de1afa3c1382f8c663a25f055978cbc6e8423493ec157579ec5" "kubectl"
+        
+        # Kind
+        install_bin "https://kind.sigs.k8s.io/dl/v0.20.0/kind-linux-amd64" \
+                    "513a7213d6d3332dd9ef27c24dab35e5ef10a04fa27274fe1c14d8a246493ded" "kind"
+
+        # Helm
+        echo "  Downloading Helm..."
+        curl -fsSL https://get.helm.sh/helm-v3.13.3-linux-amd64.tar.gz -o helm.tar.gz
+        echo "bbb6e7c6201458b235f335280f35493950dcd856825ddcfd1d3b40ae757d5c7d  helm.tar.gz" | sha256sum --check
+        tar -zxf helm.tar.gz
+        sudo mv linux-amd64/helm /usr/local/bin/helm
+        rm -rf linux-amd64 helm.tar.gz
+
+        # Kuttl
+        echo "  Downloading Kuttl..."
+        curl -fsSL https://github.com/kudobuilder/kuttl/releases/download/v0.24.0/kuttl_0.24.0_linux_x86_64.tar.gz -o kuttl.tar.gz
+        echo "9451186fd17517a58ac5c498c1b7761fd117e91db3c7543d437554fab7452294  kuttl.tar.gz" | sha256sum --check
+        tar -xzf kuttl.tar.gz kubectl-kuttl
+        sudo mv kubectl-kuttl /usr/local/bin/
+        rm kuttl.tar.gz
+
+        # Istio (Keep shell pipe for now, but note risk. Pinning version is safer than latest.)
+        curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.28.0 sh -
+        sudo mv istio-1.28.0/bin/istioctl /usr/local/bin/
+        rm -rf istio-1.28.0
+
+        # Tekton
+        echo "  Downloading Tekton..."
+        curl -fsSL https://github.com/tektoncd/cli/releases/download/v0.43.0/tkn_0.43.0_Linux_x86_64.tar.gz -o tkn.tar.gz
+        echo "8a5cbeed07fcfd519199c84f93d08ec2c5d3ccea987b4573b1cd3b8def19ceb5  tkn.tar.gz" | sha256sum --check
+        tar -xzf tkn.tar.gz tkn
+        sudo mv tkn /usr/local/bin/
+        rm tkn.tar.gz
+
+        # ArgoCD
+        install_bin "https://github.com/argoproj/argo-cd/releases/download/v2.12.3/argocd-linux-amd64" \
+                    "28350b3d67b441a1871ea1ef957ffd0a62d4c1827c0ce261aba63809113ab783" "argocd"
+
+        # Kyverno
+        echo "  Downloading Kyverno..."
+        curl -fsSL https://github.com/kyverno/kyverno/releases/download/v1.16.1/kyverno-cli_v1.16.1_linux_x86_64.tar.gz -o kyverno.tar.gz
+        echo "0c0216e4c3bb535eaf94ea1c2e13e4d66f7be2ec6446c37aee6c3133650167e7  kyverno.tar.gz" | sha256sum --check
+        tar -xzf kyverno.tar.gz kyverno
+        sudo mv kyverno /usr/local/bin/
+        rm kyverno.tar.gz
+
+        # Yq
+        install_bin "https://github.com/mikefarah/yq/releases/download/v4.50.1/yq_linux_amd64" \
+                    "c7a1278e6bbc4924f41b56db838086c39d13ee25dcb22089e7fbf16ac901f0d4" "yq"
+
+        echo ""
+        echo "Done. Run: just check"
+      fi
+      ;;
+    *)
+      # Fallback for generic Linux
+      echo "Automatic installation for this distro is not supported in this script version."
+      exit 1
+      ;;
+  esac
+fi

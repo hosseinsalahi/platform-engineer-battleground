@@ -1,0 +1,20 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: cnpe-memory-alert
+  namespace: monitoring
+  labels:
+    release: prometheus-stack
+spec:
+  groups:
+  - name: cnpe.rules
+    interval: 30s
+    rules:
+    - alert: HighMemoryUsage
+      expr: container_memory_working_set_bytes > 100000000
+      for: 2m
+      labels:
+        team: platform
+      annotations:
+        summary: "Pod memory usage is high"
+        description: "Pod {{$labels.pod}} in namespace {{$labels.namespace}} has high memory usage"

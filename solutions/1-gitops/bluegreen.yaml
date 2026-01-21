@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment-api-active
+  namespace: cnpe-bluegreen-test
+spec:
+  selector:
+    app: payment-api
+  ports:
+  - port: 80
+    targetPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment-api-preview
+  namespace: cnpe-bluegreen-test
+spec:
+  selector:
+    app: payment-api
+  ports:
+  - port: 80
+    targetPort: 8080
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: payment-api
+  namespace: cnpe-bluegreen-test
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: payment-api
+  template:
+    metadata:
+      labels:
+        app: payment-api
+    spec:
+      containers:
+      - name: payment-api
+        image: nginx:1.25
+        ports:
+        - containerPort: 8080
+  strategy:
+    blueGreen:
+      activeService: payment-api-active
+      previewService: payment-api-preview
+      autoPromotionEnabled: false

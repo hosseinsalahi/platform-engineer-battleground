@@ -1,0 +1,8 @@
+# Phase 2: Role has deployment permissions
+apiVersion: kuttl.dev/v1beta1
+kind: TestAssert
+commands:
+  - script: |
+      kubectl auth can-i create deployments \
+        --as=system:serviceaccount:cnpe-rbac-test:platform-deployer \
+        -n cnpe-rbac-test
