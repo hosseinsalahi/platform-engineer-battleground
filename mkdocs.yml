@@ -1,6 +1,5 @@
 site_name: platform-engineer-battleground
 nav:
   - Home: index.md
-docs_dir: .
 plugins:
   - techdocs-core
